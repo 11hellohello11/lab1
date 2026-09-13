@@ -25,6 +25,12 @@ Accept: application/json
 GET {{host}}/api/incidents?status=Unknown
 Accept: application/json
 
-### Lab 1 extension point: expected 501 before student implementation
+### Lab 1 extension point: severity-summary (Контракт варіанта 2-A, очікується 200 OK)
+# Політика нульових груп: лише наявні групи
+# Порядок: лексикографічний
 GET {{host}}/api/incidents/severity-summary
+Accept: application/json
+
+### Missing resource (2)
+GET {{host}}/api/incidents/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
 Accept: application/json
