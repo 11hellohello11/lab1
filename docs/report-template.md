@@ -6,7 +6,7 @@
 - Робоча гілка: lab/1-system. 
 - Основна гілка: main.
 - Тег: v0.1.0
-- Commit hash: 9857ed1b88d165ab157c7b703111c3396d1dec77
+- Commit hash: 9857ed1b88d165ab157c7b703111c3396d1dec77 (git rev-parse HEAD)
 
 ## 2. Вивід docker compose ... ps, який підтверджує успішний запуск контейнера БД
 
