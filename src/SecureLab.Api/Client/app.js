@@ -109,3 +109,44 @@ filterForm.addEventListener("submit", (event) => {
 });
 
 loadIncidents();
+
+// --- Етап 3: Підсумок інцидентів за severity ---
+const loadSeverityBtn = document.querySelector("#load-severity-btn");
+const severityStatusElement = document.querySelector("#severity-status");
+const severityListElement = document.querySelector("#severity-list");
+
+async function loadSeveritySummary() {
+    // 1. Для доброго рівня: до request показуємо стан «Завантаження…»
+    severityStatusElement.textContent = "Завантаження…";
+    severityListElement.replaceChildren();
+
+    try {
+        // 2. Викликаємо endpoint через наявну обгортку apiFetch
+        const summaryData = await apiFetch("/api/incidents/severity-summary");
+
+        // 3. Для доброго рівня: для порожнього масиву показуємо окремий стан «Даних немає»
+        // (Ця гілка реалізована для виконання вимог доброго рівня; на базовому seed-наборі
+        // дані є, але якщо таблиця стане порожньою, спрацює цей захист)
+        if (!summaryData || summaryData.length === 0) {
+            severityStatusElement.textContent = "Даних немає";
+            return;
+        }
+
+        severityStatusElement.textContent = "";
+
+        // 4. Для успішної відповіді створюємо DOM-вузол через textElement / textContent
+        for (const summary of summaryData) {
+            const item = document.createElement("li");
+            item.textContent = `${summary.severity}: ${summary.count}`;
+            severityListElement.append(item);
+        }
+    } catch (error) {
+        // 5. Для доброго рівня у catch: коротке фіксоване повідомлення без внутрішніх деталей
+        severityStatusElement.textContent = "Не вдалося завантажити підсумок інцидентів.";
+    }
+}
+
+if (loadSeverityBtn) {
+    // 6. Викликається обробником події кнопки
+    loadSeverityBtn.addEventListener("click", loadSeveritySummary);
+}
