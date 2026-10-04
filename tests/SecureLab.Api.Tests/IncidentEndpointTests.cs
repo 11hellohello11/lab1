@@ -53,4 +53,57 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
         Assert.DoesNotContain("innerHTML", script, StringComparison.Ordinal);
         Assert.Contains("textContent", script, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task CreateIncident_WithNumericSeverity_Returns400()
+    {
+        var request = new
+        {
+            title = $"T02 invalid severity {Guid.NewGuid()}",
+            description = "Valid description for automatic T-02 validation test.",
+            severity = "7",
+            occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
+        };
+
+        using var response = await _client.PostAsJsonAsync(
+            "/api/incidents",
+            request);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(json);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        Assert.True(
+            document.RootElement
+                .GetProperty("errors")
+                .TryGetProperty("severity", out _));
+    }
+
+    [Fact]
+    public async Task CreateIncident_WithDuplicateActiveTitle_Returns409()
+    {
+        var title = $"T03 duplicate title {Guid.NewGuid()}";
+
+        var request = new
+        {
+            title,
+            description = "Valid description for automatic T-03 conflict test.",
+            severity = "Medium",
+            occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
+        };
+
+        using var firstResponse = await _client.PostAsJsonAsync(
+            "/api/incidents",
+            request);
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+
+        using var secondResponse = await _client.PostAsJsonAsync(
+            "/api/incidents",
+            request);
+
+        Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+
+    }
 }
