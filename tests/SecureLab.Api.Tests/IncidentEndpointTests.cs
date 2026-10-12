@@ -10,6 +10,10 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
     : IClassFixture<SecureLabApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
+    private static string StudyPassword =>
+    Environment.GetEnvironmentVariable("SeedUsers__Password")
+    ?? throw new InvalidOperationException(
+        "Set local SeedUsers__Password outside Git.");
 
     [Fact]
     public async Task GetList_ReturnsSeededIncidents()
@@ -57,6 +61,7 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
     [Fact]
     public async Task CreateIncident_WithNumericSeverity_Returns400()
     {
+        using var alice = await factory.LoginAsync("alice", StudyPassword);
         var request = new
         {
             title = $"T02 invalid severity {Guid.NewGuid()}",
@@ -65,7 +70,7 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
             occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
         };
 
-        using var response = await _client.PostAsJsonAsync(
+        using var response = await alice.PostAsJsonAsync(
             "/api/incidents",
             request);
 
@@ -83,6 +88,7 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
     [Fact]
     public async Task CreateIncident_WithDuplicateActiveTitle_Returns409()
     {
+        using var alice = await factory.LoginAsync("alice", StudyPassword);
         var title = $"T03 duplicate title {Guid.NewGuid()}";
 
         var request = new
@@ -93,13 +99,13 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
             occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
         };
 
-        using var firstResponse = await _client.PostAsJsonAsync(
+        using var firstResponse = await alice.PostAsJsonAsync(
             "/api/incidents",
             request);
 
         Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
-        using var secondResponse = await _client.PostAsJsonAsync(
+        using var secondResponse = await alice.PostAsJsonAsync(
             "/api/incidents",
             request);
 
