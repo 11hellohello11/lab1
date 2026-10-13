@@ -94,7 +94,6 @@ public static class Lab03Identity
             return result.Succeeded ? Results.NoContent() : Results.Unauthorized();
         });
         app.MapPost("/api/auth/logout", () => Results.StatusCode(StatusCodes.Status501NotImplemented));
-        // Навмисно хибна навчальна довіра: ЛР 03 замінює заявлений id на verified principal.
         app.MapGet("/api/me", GetCurrentUser)
             .RequireAuthorization();
         // Приклад лише mechanics: не повертає identity і не реалізує оцінювану operation.

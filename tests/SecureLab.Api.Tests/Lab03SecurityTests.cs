@@ -53,11 +53,12 @@ public sealed class Lab03SecurityTests(SecureLabApiFactory factory)
 
         Assert.Equal("alice", userName);
     }
-    // A-05: користувач не може підмінити власника інциденту
+
+    // A-05: Bob не може підмінити власника інциденту на Alice
     [Fact]
     public async Task A05_ClientCannotForgeIncidentOwner()
     {
-        using var alice = await factory.LoginAsync("alice", StudyPassword);
+        using var bob = await factory.LoginAsync("bob", StudyPassword);
 
         var title = $"A05 owner protection {Guid.NewGuid()}";
 
@@ -68,11 +69,11 @@ public sealed class Lab03SecurityTests(SecureLabApiFactory factory)
             severity = "Low",
             occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10),
 
-            // навмисно вказуємо Bob замість Alice
-            ownerUserId = DbSeeder.BobId
+            // навмисно вказуємо Alice замість Bob
+            ownerUserId = DbSeeder.AliceId
         };
 
-        using var response = await alice.PostAsJsonAsync(
+        using var response = await bob.PostAsJsonAsync(
             "/api/incidents",
             request);
 
@@ -92,7 +93,7 @@ public sealed class Lab03SecurityTests(SecureLabApiFactory factory)
             .Select(incident => incident.OwnerUserId)
             .SingleAsync();
 
-        Assert.Equal(DbSeeder.AliceId, actualOwnerId);
-        Assert.NotEqual(DbSeeder.BobId, actualOwnerId);
+        Assert.Equal(DbSeeder.BobId, actualOwnerId);
+        Assert.NotEqual(DbSeeder.AliceId, actualOwnerId);
     }
 }
