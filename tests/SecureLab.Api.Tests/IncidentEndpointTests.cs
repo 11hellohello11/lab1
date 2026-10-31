@@ -29,25 +29,41 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
     [Fact]
     public async Task GetDetails_ForUnknownId_ReturnsProblemDetails404()
     {
-        using var response = await _client.GetAsync($"/api/incidents/{Guid.NewGuid()}");
+        using var alice = await factory.LoginAsync("alice", StudyPassword);
+
+        using var response = await alice.GetAsync(
+            $"/api/incidents/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(
+            "application/problem+json",
+            response.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]
     public async Task GetDetails_DoesNotExposeInternalOwnerFields()
     {
-        using var response = await _client.GetAsync(
+        using var alice = await factory.LoginAsync("alice", StudyPassword);
+
+        using var response = await alice.GetAsync(
             $"/api/incidents/{DbSeeder.AliceIncidentId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
         var json = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(json);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.False(document.RootElement.TryGetProperty("ownerUserId", out _));
-        Assert.False(document.RootElement.TryGetProperty("email", out _));
-        Assert.Equal("Аліса Коваль", document.RootElement.GetProperty("ownerDisplayName").GetString());
+        Assert.False(
+            document.RootElement.TryGetProperty("ownerUserId", out _));
+
+        Assert.False(
+            document.RootElement.TryGetProperty("email", out _));
+
+        Assert.Equal(
+            "Аліса Коваль",
+            document.RootElement.GetProperty("ownerDisplayName").GetString());
     }
+
 
     [Fact]
     public async Task ClientScript_DoesNotUseDangerousInnerHtmlSink()
