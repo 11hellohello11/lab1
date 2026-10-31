@@ -1,0 +1,19 @@
+
+@baseUrl = http://localhost:5080
+@aliceIncidentId = 20000000-0000-0000-0000-000000000001
+@bobIncidentId = 20000000-0000-0000-0000-000000000002
+
+### A-02: Alice читає власний інцидент
+# Виконувати з автентифікованим сеансом Alice.
+# Очікувано: 200 OK.
+
+GET {{baseUrl}}/api/incidents/{{aliceIncidentId}}
+Accept: application/json
+
+### A-03: Alice намагається прочитати інцидент Bob
+# Виконувати з тим самим автентифікованим сеансом Alice.
+# До виправлення: 200 OK (IDOR/BOLA).
+# Після виправлення: 404 Not Found.
+
+GET {{baseUrl}}/api/incidents/{{bobIncidentId}}
+Accept: application/json
