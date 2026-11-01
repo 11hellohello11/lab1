@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 using SecureLab.Api.Application.Incidents;
 using SecureLab.Api.Data;
 using SecureLab.Api.Presentation.Endpoints;
+using Microsoft.AspNetCore.Antiforgery;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -12,6 +13,10 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 });
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+});
 
 var connectionString = builder.Configuration.GetConnectionString("SecureLab")
     ?? throw new InvalidOperationException(
@@ -46,15 +51,20 @@ if (resetRequested)
     return;
 }
 
-app.UseExceptionHandler();
-app.UseStatusCodePages();
-
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.XContentTypeOptions = "nosniff";
-    context.Response.Headers.Append("Referrer-Policy", "no-referrer");
-    await next(context);
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        context.Response.Headers["Referrer-Policy"] = "no-referrer";
+        return Task.CompletedTask;
+    });
+
+    await next();
 });
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
@@ -85,6 +95,19 @@ app.MapGet("/health", async (SecureLabDbContext dbContext, CancellationToken can
     .Produces(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
+app.MapGet("/api/antiforgery/token", (
+    IAntiforgery antiforgery,
+    HttpContext context) =>
+{
+    var tokens = antiforgery.GetAndStoreTokens(context);
+
+    context.Response.Headers.CacheControl = "no-store";
+
+    return Results.Ok(new
+    {
+        token = tokens.RequestToken
+    });
+}).RequireAuthorization();
 app.MapIncidentEndpoints();
 app.MapLab03Identity();
 app.MapLab02Endpoints();

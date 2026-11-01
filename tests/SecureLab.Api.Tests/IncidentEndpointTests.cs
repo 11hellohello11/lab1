@@ -86,7 +86,7 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
             occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
         };
 
-        using var response = await alice.PostAsJsonAsync(
+        using var response = await alice.PostWithCsrfAsync(
             "/api/incidents",
             request);
 
@@ -115,13 +115,13 @@ public sealed class IncidentEndpointTests(SecureLabApiFactory factory)
             occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
         };
 
-        using var firstResponse = await alice.PostAsJsonAsync(
+        using var firstResponse = await alice.PostWithCsrfAsync(
             "/api/incidents",
             request);
 
         Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
-        using var secondResponse = await alice.PostAsJsonAsync(
+        using var secondResponse = await alice.PostWithCsrfAsync(
             "/api/incidents",
             request);
 

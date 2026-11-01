@@ -3,6 +3,7 @@ using SecureLab.Api.Data;
 using SecureLab.Api.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace SecureLab.Api.Scaffolding;
 
@@ -75,8 +76,17 @@ public static class Lab02Endpoints
             CreateIncidentRequest request,
             SecureLabDbContext db,
             HttpContext context,
+            IAntiforgery antiforgery,
             CancellationToken ct) =>
         {
+            if (!await antiforgery.IsRequestValidAsync(context))
+            {
+                return Results.BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid antiforgery token",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
             var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (!Guid.TryParse(userId, out var verifiedUserId))

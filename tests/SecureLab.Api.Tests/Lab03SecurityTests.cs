@@ -73,7 +73,7 @@ public sealed class Lab03SecurityTests(SecureLabApiFactory factory)
             ownerUserId = DbSeeder.AliceId
         };
 
-        using var response = await bob.PostAsJsonAsync(
+        using var response = await bob.PostWithCsrfAsync(
             "/api/incidents",
             request);
 
